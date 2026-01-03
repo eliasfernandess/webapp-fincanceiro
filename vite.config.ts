@@ -7,29 +7,17 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
         name: 'Plano Financeiro',
         short_name: 'PlanoFin',
         description: 'Aplicação completa de planejamento financeiro',
         theme_color: '#3b82f6',
-        icons: [
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          }
-        ]
+        icons: []
       },
+      strategies: 'generateSW',
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
-      },
-      strategies: 'generateSW'
+        globPatterns: ['**/*.{js,css,html}']
+      }
     })
   ],
   resolve: {
