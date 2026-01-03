@@ -66,7 +66,7 @@ export default function Layout({ children }: LayoutProps) {
             <img 
               src="/logo.png" 
               alt="Plano Financeiro" 
-              className="h-8 w-auto"
+              className="h-12 w-auto"
               onError={() => setLogoError(true)}
             />
           )}
@@ -105,7 +105,7 @@ export default function Layout({ children }: LayoutProps) {
                 <img 
                   src="/logo.png" 
                   alt="Plano Financeiro" 
-                  className="h-8 w-auto"
+                  className="h-10 w-auto"
                   onError={() => setLogoError(true)}
                 />
               )}
@@ -147,7 +147,7 @@ export default function Layout({ children }: LayoutProps) {
               <img 
                 src="/logo.png" 
                 alt="Plano Financeiro" 
-                className="h-10 w-auto"
+                className="h-16 w-auto"
                 onError={() => setLogoError(true)}
               />
             )}
