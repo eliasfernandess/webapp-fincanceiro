@@ -22,6 +22,7 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const { notifications } = useFinance();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [logoError, setLogoError] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
@@ -57,9 +58,18 @@ export default function Layout({ children }: LayoutProps) {
           >
             {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
-          <h1 className="text-xl font-bold text-primary-600 dark:text-primary-400">
-            Plano Financeiro
-          </h1>
+          {logoError ? (
+            <h1 className="text-xl font-bold text-primary-600 dark:text-primary-400">
+              Plano Financeiro
+            </h1>
+          ) : (
+            <img 
+              src="/logo.png" 
+              alt="Plano Financeiro" 
+              className="h-8 w-auto"
+              onError={() => setLogoError(true)}
+            />
+          )}
           <div className="flex items-center gap-2">
             <Link
               to="/settings"
@@ -87,9 +97,18 @@ export default function Layout({ children }: LayoutProps) {
         <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setSidebarOpen(false)}>
           <div className="bg-white dark:bg-gray-800 w-64 h-full shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-bold text-primary-600 dark:text-primary-400">
-                Plano Financeiro
-              </h2>
+              {logoError ? (
+                <h2 className="text-lg font-bold text-primary-600 dark:text-primary-400">
+                  Plano Financeiro
+                </h2>
+              ) : (
+                <img 
+                  src="/logo.png" 
+                  alt="Plano Financeiro" 
+                  className="h-8 w-auto"
+                  onError={() => setLogoError(true)}
+                />
+              )}
             </div>
             <nav className="p-4 space-y-2">
               {navItems.map((item) => {
@@ -120,9 +139,18 @@ export default function Layout({ children }: LayoutProps) {
         {/* Desktop Sidebar */}
         <aside className="hidden lg:flex flex-col w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 min-h-screen sticky top-0">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h1 className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-              Plano Financeiro
-            </h1>
+            {logoError ? (
+              <h1 className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+                Plano Financeiro
+              </h1>
+            ) : (
+              <img 
+                src="/logo.png" 
+                alt="Plano Financeiro" 
+                className="h-10 w-auto"
+                onError={() => setLogoError(true)}
+              />
+            )}
           </div>
           <nav className="flex-1 p-4 space-y-2">
             {navItems.map((item) => {
