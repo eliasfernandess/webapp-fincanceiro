@@ -8,6 +8,8 @@ import {
   getNotifications,
   saveNotifications 
 } from '../utils/storage';
+import { useDatabase } from '../services/database';
+import { isSupabaseEnabled } from '../config/supabase';
 
 interface FinanceContextType {
   transactions: Transaction[];
@@ -53,40 +55,66 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [categories, setCategories] = useState<Category[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const isInitialMount = useRef(true);
+  const db = useDatabase();
 
   useEffect(() => {
-    const loadedTransactions = getTransactions();
-    const loadedCategories = getCategories();
-    const loadedNotifications = getNotifications();
+    const loadData = async () => {
+      // Carregar do Supabase se disponível, senão do localStorage
+      const loadedTransactions = isSupabaseEnabled 
+        ? await db.getTransactions()
+        : getTransactions();
+      const loadedCategories = isSupabaseEnabled
+        ? await db.getCategories()
+        : getCategories();
+      const loadedNotifications = getNotifications();
 
-    // Processar transações para atualizar status de vencidas
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const processedTransactions = loadedTransactions.map(t => {
-      const dueDate = new Date(t.dueDate);
-      dueDate.setHours(0, 0, 0, 0);
-      const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysUntilDue < 0 && t.status === 'pending') {
-        return { ...t, status: 'overdue' as const };
-      }
-      return t;
-    });
+      // Processar transações para atualizar status de vencidas
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const processedTransactions = loadedTransactions.map(t => {
+        const dueDate = new Date(t.dueDate);
+        dueDate.setHours(0, 0, 0, 0);
+        const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysUntilDue < 0 && t.status === 'pending') {
+          return { ...t, status: 'overdue' as const };
+        }
+        return t;
+      });
 
-    setTransactions(processedTransactions);
-    setCategories(loadedCategories.length > 0 ? loadedCategories : defaultCategories);
-    setNotifications(loadedNotifications);
+      setTransactions(processedTransactions);
+      setCategories(loadedCategories.length > 0 ? loadedCategories : defaultCategories);
+      setNotifications(loadedNotifications);
 
-    isInitialMount.current = false;
+      isInitialMount.current = false;
+    };
+
+    loadData();
   }, []);
 
   useEffect(() => {
-    if (!isInitialMount.current && transactions.length > 0) {
-      saveTransactions(transactions);
+    if (!isInitialMount.current) {
+      // Salvar no Supabase se disponível, senão no localStorage
+      if (isSupabaseEnabled) {
+        transactions.forEach(transaction => {
+          db.saveTransaction(transaction).catch(console.error);
+        });
+      } else {
+        saveTransactions(transactions);
+      }
     }
   }, [transactions]);
 
   useEffect(() => {
-    saveCategories(categories);
+    if (!isInitialMount.current) {
+      // Salvar no Supabase se disponível, senão no localStorage
+      if (isSupabaseEnabled) {
+        categories.forEach(category => {
+          db.saveCategory(category).catch(console.error);
+        });
+      } else {
+        saveCategories(categories);
+      }
+    }
   }, [categories]);
 
   useEffect(() => {
@@ -129,21 +157,39 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       updatedAt: new Date().toISOString(),
     };
     setTransactions(prev => [...prev, newTransaction]);
+    
+    // Salvar no Supabase imediatamente se disponível
+    if (isSupabaseEnabled) {
+      db.saveTransaction(newTransaction).catch(console.error);
+    }
   };
 
   const updateTransaction = (id: string, updates: Partial<Transaction>) => {
-    setTransactions(prev =>
-      prev.map(t =>
+    setTransactions(prev => {
+      const updated = prev.map(t =>
         t.id === id
           ? { ...t, ...updates, updatedAt: new Date().toISOString() }
           : t
-      )
-    );
+      );
+      // Salvar no Supabase imediatamente se disponível
+      if (isSupabaseEnabled) {
+        const transaction = updated.find(t => t.id === id);
+        if (transaction) {
+          db.saveTransaction(transaction).catch(console.error);
+        }
+      }
+      return updated;
+    });
   };
 
   const deleteTransaction = (id: string) => {
     setTransactions(prev => prev.filter(t => t.id !== id));
     setNotifications(prev => prev.filter(n => n.transactionId !== id));
+    
+    // Deletar no Supabase se disponível
+    if (isSupabaseEnabled) {
+      db.deleteTransaction(id).catch(console.error);
+    }
   };
 
   const addCategory = (categoryData: Omit<Category, 'id'>) => {
@@ -152,16 +198,34 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       id: Date.now().toString() + Math.random(),
     };
     setCategories(prev => [...prev, newCategory]);
+    
+    // Salvar no Supabase imediatamente se disponível
+    if (isSupabaseEnabled) {
+      db.saveCategory(newCategory).catch(console.error);
+    }
   };
 
   const updateCategory = (id: string, updates: Partial<Category>) => {
-    setCategories(prev =>
-      prev.map(c => (c.id === id ? { ...c, ...updates } : c))
-    );
+    setCategories(prev => {
+      const updated = prev.map(c => (c.id === id ? { ...c, ...updates } : c));
+      // Salvar no Supabase imediatamente se disponível
+      if (isSupabaseEnabled) {
+        const category = updated.find(c => c.id === id);
+        if (category) {
+          db.saveCategory(category).catch(console.error);
+        }
+      }
+      return updated;
+    });
   };
 
   const deleteCategory = (id: string) => {
     setCategories(prev => prev.filter(c => c.id !== id));
+    
+    // Deletar no Supabase se disponível
+    if (isSupabaseEnabled) {
+      db.deleteCategory(id).catch(console.error);
+    }
   };
 
   const markNotificationAsRead = (id: string) => {

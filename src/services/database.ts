@@ -21,7 +21,21 @@ export const useDatabase = () => {
           console.error('Erro ao buscar transações:', error);
           return getLocalTransactions(); // Fallback para localStorage
         }
-        return data || [];
+        
+        // Mapear dados do banco (snake_case) para formato da aplicação (camelCase)
+        return (data || []).map((item: any) => ({
+          id: item.id,
+          description: item.description,
+          amount: parseFloat(item.amount),
+          dueDate: item.due_date,
+          paymentDate: item.payment_date || undefined,
+          category: item.category,
+          type: item.type,
+          status: item.status,
+          notes: item.notes || undefined,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+        }));
       },
       
       saveTransaction: async (transaction: Transaction): Promise<void> => {
@@ -72,7 +86,15 @@ export const useDatabase = () => {
           console.error('Erro ao buscar categorias:', error);
           return getLocalCategories();
         }
-        return data || [];
+        
+        // Mapear dados do banco para formato da aplicação
+        return (data || []).map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          color: item.color,
+          icon: item.icon,
+          type: item.type,
+        }));
       },
       
       saveCategory: async (category: Category): Promise<void> => {
