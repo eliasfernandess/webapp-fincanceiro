@@ -11,56 +11,81 @@ export const useDatabase = () => {
   if (isSupabaseEnabled && supabase) {
     return {
       getTransactions: async (): Promise<Transaction[]> => {
-        const { data, error } = await supabase!
-          .from('transactions')
-          .select('*')
-          .eq('user_id', USER_ID)
-          .order('created_at', { ascending: false });
-        
-        if (error) {
-          console.error('Erro ao buscar transações:', error);
-          return getLocalTransactions(); // Fallback para localStorage
+        try {
+          const { data, error } = await supabase!
+            .from('transactions')
+            .select('*')
+            .eq('user_id', USER_ID)
+            .order('created_at', { ascending: false });
+          
+          if (error) {
+            console.error('❌ Erro ao buscar transações do Supabase:', error);
+            console.error('📋 Detalhes:', {
+              message: error.message,
+              details: error.details,
+              hint: error.hint,
+              code: error.code
+            });
+            return getLocalTransactions(); // Fallback para localStorage
+          }
+          
+          console.log('✅ Transações carregadas do Supabase:', data?.length || 0);
+          
+          // Mapear dados do banco (snake_case) para formato da aplicação (camelCase)
+          return (data || []).map((item: any) => ({
+            id: item.id,
+            description: item.description,
+            amount: parseFloat(item.amount),
+            dueDate: item.due_date,
+            paymentDate: item.payment_date || undefined,
+            category: item.category,
+            type: item.type,
+            status: item.status,
+            notes: item.notes || undefined,
+            createdAt: item.created_at,
+            updatedAt: item.updated_at,
+          }));
+        } catch (err) {
+          console.error('❌ Exceção ao buscar transações:', err);
+          return getLocalTransactions();
         }
-        
-        // Mapear dados do banco (snake_case) para formato da aplicação (camelCase)
-        return (data || []).map((item: any) => ({
-          id: item.id,
-          description: item.description,
-          amount: parseFloat(item.amount),
-          dueDate: item.due_date,
-          paymentDate: item.payment_date || undefined,
-          category: item.category,
-          type: item.type,
-          status: item.status,
-          notes: item.notes || undefined,
-          createdAt: item.created_at,
-          updatedAt: item.updated_at,
-        }));
       },
       
       saveTransaction: async (transaction: Transaction): Promise<void> => {
-        const { error } = await supabase!
-          .from('transactions')
-          .upsert({
-            id: transaction.id,
-            user_id: USER_ID,
-            description: transaction.description,
-            amount: transaction.amount,
-            due_date: transaction.dueDate,
-            payment_date: transaction.paymentDate || null,
-            category: transaction.category,
-            type: transaction.type,
-            status: transaction.status,
-            notes: transaction.notes || null,
-            created_at: transaction.createdAt,
-            updated_at: transaction.updatedAt,
-          });
-        
-        if (error) {
-          console.error('Erro ao salvar transação:', error);
-          // Salvar localmente também como backup
-          const local = getLocalTransactions();
-          saveLocalTransactions([...local.filter(t => t.id !== transaction.id), transaction]);
+        try {
+          const { error } = await supabase!
+            .from('transactions')
+            .upsert({
+              id: transaction.id,
+              user_id: USER_ID,
+              description: transaction.description,
+              amount: transaction.amount,
+              due_date: transaction.dueDate,
+              payment_date: transaction.paymentDate || null,
+              category: transaction.category,
+              type: transaction.type,
+              status: transaction.status,
+              notes: transaction.notes || null,
+              created_at: transaction.createdAt,
+              updated_at: transaction.updatedAt,
+            });
+          
+          if (error) {
+            console.error('❌ Erro ao salvar transação no Supabase:', error);
+            console.error('📋 Detalhes:', {
+              message: error.message,
+              details: error.details,
+              hint: error.hint,
+              code: error.code
+            });
+            // Salvar localmente também como backup
+            const local = getLocalTransactions();
+            saveLocalTransactions([...local.filter(t => t.id !== transaction.id), transaction]);
+          } else {
+            console.log('✅ Transação salva no Supabase:', transaction.description);
+          }
+        } catch (err) {
+          console.error('❌ Exceção ao salvar transação:', err);
         }
       },
       

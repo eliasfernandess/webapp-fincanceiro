@@ -59,6 +59,8 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   useEffect(() => {
     const loadData = async () => {
+      console.log('🔄 Carregando dados...', { isSupabaseEnabled });
+      
       // Carregar do Supabase se disponível, senão do localStorage
       const loadedTransactions = isSupabaseEnabled 
         ? await db.getTransactions()
@@ -67,6 +69,12 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
         ? await db.getCategories()
         : getCategories();
       const loadedNotifications = getNotifications();
+      
+      console.log('📊 Dados carregados:', {
+        transactions: loadedTransactions.length,
+        categories: loadedCategories.length,
+        source: isSupabaseEnabled ? 'Supabase' : 'localStorage'
+      });
 
       // Processar transações para atualizar status de vencidas
       const today = new Date();
