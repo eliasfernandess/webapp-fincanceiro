@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { Transaction, Category, Notification, FinancialSummary } from '../types';
 import { 
   getTransactions, 
@@ -52,23 +52,37 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
     const loadedTransactions = getTransactions();
     const loadedCategories = getCategories();
     const loadedNotifications = getNotifications();
 
-    setTransactions(loadedTransactions);
+    // Processar transações para atualizar status de vencidas
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const processedTransactions = loadedTransactions.map(t => {
+      const dueDate = new Date(t.dueDate);
+      dueDate.setHours(0, 0, 0, 0);
+      const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysUntilDue < 0 && t.status === 'pending') {
+        return { ...t, status: 'overdue' as const };
+      }
+      return t;
+    });
+
+    setTransactions(processedTransactions);
     setCategories(loadedCategories.length > 0 ? loadedCategories : defaultCategories);
     setNotifications(loadedNotifications);
 
-    // Verificar vencimentos e criar notificações
-    checkDueDates(loadedTransactions);
+    isInitialMount.current = false;
   }, []);
 
   useEffect(() => {
-    saveTransactions(transactions);
-    checkDueDates(transactions);
+    if (!isInitialMount.current && transactions.length > 0) {
+      saveTransactions(transactions);
+    }
   }, [transactions]);
 
   useEffect(() => {
@@ -79,85 +93,33 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     saveNotifications(notifications);
   }, [notifications]);
 
-  const checkDueDates = (transactionsList: Transaction[]) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const newNotifications: Notification[] = [];
-    
-    transactionsList.forEach(transaction => {
-      if (transaction.status === 'pending' || transaction.status === 'overdue') {
-        const dueDate = new Date(transaction.dueDate);
-        dueDate.setHours(0, 0, 0, 0);
-        
-        const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        
-        // Notificar 3 dias antes
-        if (daysUntilDue === 3) {
-          const exists = notifications.some(n => 
-            n.transactionId === transaction.id && 
-            n.message.includes('vence em 3 dias')
-          );
-          if (!exists) {
-            newNotifications.push({
-              id: Date.now().toString() + Math.random(),
-              transactionId: transaction.id,
-              message: `${transaction.description} vence em 3 dias (${transaction.dueDate})`,
-              type: 'warning',
-              read: false,
-              createdAt: new Date().toISOString(),
-            });
-          }
-        }
-        
-        // Notificar no dia do vencimento
-        if (daysUntilDue === 0) {
-          const exists = notifications.some(n => 
-            n.transactionId === transaction.id && 
-            n.message.includes('vence hoje')
-          );
-          if (!exists) {
-            newNotifications.push({
-              id: Date.now().toString() + Math.random(),
-              transactionId: transaction.id,
-              message: `${transaction.description} vence hoje!`,
-              type: 'error',
-              read: false,
-              createdAt: new Date().toISOString(),
-            });
-          }
-        }
-        
-        // Notificar se vencido
-        if (daysUntilDue < 0 && transaction.status !== 'overdue') {
-          newNotifications.push({
-            id: Date.now().toString() + Math.random(),
-            transactionId: transaction.id,
-            message: `${transaction.description} está vencida há ${Math.abs(daysUntilDue)} dias!`,
-            type: 'error',
-            read: false,
-            createdAt: new Date().toISOString(),
-          });
-        }
-      }
-    });
+  // Verificar vencimentos periodicamente (sem causar loops)
+  useEffect(() => {
+    if (transactions.length === 0) return;
 
-    if (newNotifications.length > 0) {
-      setNotifications(prev => [...newNotifications, ...prev]);
-    }
-
-    // Atualizar status de vencidas
-    setTransactions(prev => prev.map(t => {
-      const dueDate = new Date(t.dueDate);
-      dueDate.setHours(0, 0, 0, 0);
-      const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const interval = setInterval(() => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       
-      if (daysUntilDue < 0 && t.status === 'pending') {
-        return { ...t, status: 'overdue' };
-      }
-      return t;
-    }));
-  };
+      setTransactions(prev => {
+        let hasChanges = false;
+        const updated = prev.map(t => {
+          const dueDate = new Date(t.dueDate);
+          dueDate.setHours(0, 0, 0, 0);
+          const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          if (daysUntilDue < 0 && t.status === 'pending') {
+            hasChanges = true;
+            return { ...t, status: 'overdue' as const };
+          }
+          return t;
+        });
+        // Só retorna novo array se houver mudanças
+        return hasChanges ? updated : prev;
+      });
+    }, 60000); // Verifica a cada minuto
+
+    return () => clearInterval(interval);
+  }, [transactions.length]);
 
   const addTransaction = (transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newTransaction: Transaction = {

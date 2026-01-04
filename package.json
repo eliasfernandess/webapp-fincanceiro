@@ -10,17 +10,21 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.89.0",
+    "clsx": "^2.0.0",
+    "date-fns": "^2.30.0",
+    "lucide-react": "^0.294.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.0",
-    "date-fns": "^2.30.0",
+    "react-to-print": "^3.2.0",
     "recharts": "^2.10.3",
-    "lucide-react": "^0.294.0",
-    "clsx": "^2.0.0"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
+    "@types/xlsx": "^0.0.35",
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
     "@vitejs/plugin-react": "^4.2.1",
@@ -35,4 +39,3 @@
     "vite-plugin-pwa": "^0.17.4"
   }
 }
-

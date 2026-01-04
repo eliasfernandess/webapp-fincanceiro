@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { Plus, Edit, Trash2, Tag } from 'lucide-react';
+import { Plus, Edit, Trash2, Tag, X } from 'lucide-react';
 import { Category } from '../types';
+import { ConfirmModal } from '../components/Modal';
 
 const COLOR_OPTIONS = [
   '#ef4444', '#f59e0b', '#eab308', '#10b981', '#14b8a6',
@@ -19,6 +20,7 @@ export default function Categories() {
   const { categories, addCategory, updateCategory, deleteCategory } = useFinance();
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     color: COLOR_OPTIONS[0],
@@ -61,8 +63,13 @@ export default function Categories() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta categoria?')) {
-      deleteCategory(id);
+    setDeleteId(id);
+  };
+
+  const confirmDelete = () => {
+    if (deleteId) {
+      deleteCategory(deleteId);
+      setDeleteId(null);
     }
   };
 
@@ -87,12 +94,18 @@ export default function Categories() {
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-bold">
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full animate-slide-up">
+            <div className="flex items-center justify-between p-6 border-b-2 border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                 {editingCategory ? 'Editar' : 'Nova'} Categoria
               </h2>
+              <button
+                onClick={resetForm}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95"
+              >
+                <X size={20} />
+              </button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
@@ -149,7 +162,7 @@ export default function Categories() {
                 </select>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button type="submit" className="btn-primary flex-1">
                   {editingCategory ? 'Atualizar' : 'Salvar'}
                 </button>
@@ -161,6 +174,16 @@ export default function Categories() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+        title="Excluir Categoria"
+        message="Tem certeza que deseja excluir esta categoria?"
+        confirmText="Excluir"
+        type="danger"
+      />
 
       {/* Expense Categories */}
       <div>

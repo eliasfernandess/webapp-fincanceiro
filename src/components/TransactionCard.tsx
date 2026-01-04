@@ -5,6 +5,7 @@ import { STATUS_COLORS } from '../utils/constants';
 import { Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import TransactionForm from './TransactionForm';
+import { ConfirmModal } from './Modal';
 
 interface TransactionCardProps {
   transaction: Transaction;
@@ -13,6 +14,7 @@ interface TransactionCardProps {
 export default function TransactionCard({ transaction }: TransactionCardProps) {
   const { categories, updateTransaction, deleteTransaction } = useFinance();
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const category = categories.find(c => c.id === transaction.category);
 
   const handleToggleStatus = () => {
@@ -23,9 +25,7 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
   };
 
   const handleDelete = () => {
-    if (confirm('Tem certeza que deseja excluir esta transação?')) {
-      deleteTransaction(transaction.id);
-    }
+    deleteTransaction(transaction.id);
   };
 
   const daysUntilDue = getDaysUntilDue(transaction.dueDate);
@@ -33,17 +33,17 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
 
   return (
     <>
-      <div className="card hover:shadow-lg transition-shadow">
+      <div className="card hover:shadow-xl hover:scale-[1.02] transition-all duration-300 animate-fade-in">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <h3 className="font-semibold text-lg mb-1">{transaction.description}</h3>
+            <h3 className="font-bold text-lg mb-2">{transaction.description}</h3>
             {category && (
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-3">
                 <div
-                  className="w-3 h-3 rounded-full"
+                  className="w-4 h-4 rounded-full shadow-sm"
                   style={{ backgroundColor: category.color }}
                 />
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                   {category.name}
                 </span>
               </div>
@@ -93,7 +93,7 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
         )}
 
         <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[transaction.status]}`}>
+          <span className={`badge ${STATUS_COLORS[transaction.status]}`}>
             {transaction.status === 'paid' && 'Pago'}
             {transaction.status === 'received' && 'Recebido'}
             {transaction.status === 'pending' && 'Pendente'}
@@ -103,7 +103,7 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
           <div className="flex gap-2">
             <button
               onClick={handleToggleStatus}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95"
               title={transaction.status === 'paid' || transaction.status === 'received' ? 'Marcar como pendente' : 'Marcar como pago/recebido'}
             >
               {transaction.status === 'paid' || transaction.status === 'received' ? (
@@ -114,14 +114,14 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
             </button>
             <button
               onClick={() => setShowEditForm(true)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-2.5 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95 text-blue-600 dark:text-blue-400"
               title="Editar"
             >
               <Edit size={18} />
             </button>
             <button
-              onClick={handleDelete}
-              className="p-2 hover:bg-red-100 dark:hover:bg-red-900 rounded-lg transition-colors text-red-600 dark:text-red-400"
+              onClick={() => setShowDeleteModal(true)}
+              className="p-2.5 hover:bg-red-100 dark:hover:bg-red-900 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95 text-red-600 dark:text-red-400"
               title="Excluir"
             >
               <Trash2 size={18} />
@@ -138,6 +138,17 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
           onSave={() => setShowEditForm(false)}
         />
       )}
+
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        title="Excluir Transação"
+        message="Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        type="danger"
+      />
     </>
   );
 }

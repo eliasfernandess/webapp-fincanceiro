@@ -65,21 +65,21 @@ export default function TransactionForm({ transaction, type, onClose, onSave }: 
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold">
+    <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-slide-up">
+        <div className="flex items-center justify-between p-6 border-b-2 border-gray-200 dark:border-gray-700 bg-gradient-to-r from-primary-50 to-primary-100 dark:from-gray-800 dark:to-gray-800 rounded-t-2xl">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
             {transaction ? 'Editar' : 'Nova'} {type === 'expense' ? 'Conta a Pagar' : 'Conta a Receber'}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+            className="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95"
           >
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div>
             <label className="label">Descrição</label>
             <input
@@ -152,7 +152,7 @@ export default function TransactionForm({ transaction, type, onClose, onSave }: 
             />
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <button type="submit" className="btn-primary flex-1">
               {transaction ? 'Atualizar' : 'Salvar'}
             </button>

@@ -53,22 +53,22 @@ export default function Income() {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="card bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
-          <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-1">Total Pendente</p>
-          <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
+        <div className="card-gradient bg-gradient-to-br from-yellow-500 to-amber-600">
+          <p className="text-yellow-50 text-sm font-medium mb-2">Total Pendente</p>
+          <p className="text-3xl font-bold text-white">
             {formatCurrency(totalPending)}
           </p>
         </div>
-        <div className="card bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-          <p className="text-sm text-green-700 dark:text-green-300 mb-1">Total Recebido</p>
-          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+        <div className="card-gradient bg-gradient-to-br from-green-500 to-emerald-600">
+          <p className="text-green-50 text-sm font-medium mb-2">Total Recebido</p>
+          <p className="text-3xl font-bold text-white">
             {formatCurrency(totalReceived)}
           </p>
         </div>
-        <div className="card">
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total de Contas</p>
-          <p className="text-2xl font-bold">{filteredIncome.length}</p>
+        <div className="card-gradient bg-gradient-to-br from-blue-500 to-cyan-600">
+          <p className="text-blue-50 text-sm font-medium mb-2">Total de Contas</p>
+          <p className="text-3xl font-bold text-white">{filteredIncome.length}</p>
         </div>
       </div>
 
